@@ -1,0 +1,17 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(12);
+select ok((select bool_and(relrowsecurity) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'),'RLS enabled on all exposed domain tables');
+select ok(not has_table_privilege('authenticated','public.team_members','UPDATE'),'members cannot update access roles directly');
+select ok(not has_table_privilege('authenticated','public.team_invites','SELECT'),'invite tokens and emails have no direct read grant');
+select ok(not has_table_privilege('anon','public.room_instructions','SELECT'),'anonymous has no room read grant');
+select ok(not has_table_privilege('authenticated','public.demo_transfers','SELECT'),'upload resources are server only');
+select ok(not has_function_privilege('authenticated','public.mark_demo_uploaded(uuid,bigint)','EXECUTE'),'only broker may finalize upload');
+select ok(has_function_privilege('authenticated','public.execute_command(uuid,text,jsonb)','EXECUTE'),'authenticated domain dispatcher is exposed');
+select ok(not has_function_privilege('anon','public.execute_command(uuid,text,jsonb)','EXECUTE'),'anonymous cannot mutate');
+select ok((select not public from storage.buckets where id='demos'),'demo bucket is private');
+select ok(exists(select 1 from pg_constraint where conname='reservations_no_overlap' and contype='x'),'active reservations have exclusion constraint');
+select ok(not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and (qual ilike '%demos%' or with_check ilike '%demos%')),'no direct demo read/write/sign policy');
+select ok(not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') and p.prosecdef and (p.proconfig is null or not 'search_path=""'=any(p.proconfig))),'definer functions fix an empty search_path');
+select * from finish();
+rollback;

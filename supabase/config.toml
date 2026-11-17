@@ -1,0 +1,44 @@
+project_id = "round-zero-local"
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 200
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+[studio]
+enabled = true
+port = 54323
+[local_smtp]
+enabled = true
+port = 54324
+[storage]
+enabled = true
+file_size_limit = "500MiB"
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/confirm", "http://localhost:3000/auth/callback", "http://localhost:3000/redefinir-senha"]
+jwt_expiry = 3600
+enable_signup = true
+minimum_password_length = 10
+[auth.rate_limit]
+email_sent = 10
+sign_in_sign_ups = 30
+token_refresh = 150
+[auth.email]
+enabled = true
+double_confirm_changes = true
+enable_confirmations = true
+[auth.email.template.confirmation]
+subject = "Confirme seu e-mail"
+content_path = "./supabase/templates/confirmation.html"
+[auth.email.template.recovery]
+subject = "Redefinir senha"
+content_path = "./supabase/templates/recovery.html"
